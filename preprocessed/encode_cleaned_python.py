@@ -210,6 +210,7 @@ def main():
     num_keep_size = min(readm_group.shape[0], healthy_group.shape[0])
     df_balance = readm_group.sample(num_keep_size, replace=False)
     df_balance = df_balance.append(healthy_group.sample(num_keep_size, replace=False))
+    df_balance = df_balance.sample(2*num_keep_size, replace=False)
     print df_balance
     # generate features/labels dataset
     df_balance[df_balance.columns[0:16]].to_csv(PATH_ENCODED_FEATURES, header=False, index=False)
