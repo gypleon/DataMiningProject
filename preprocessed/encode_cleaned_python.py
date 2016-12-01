@@ -5,13 +5,10 @@ import sys
 import pandas as pd
 import numpy as np
 
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.neural_network import MLPClassifier
-
 PATH_CLEANED="./cleaned_python.csv"
 # PATH_CLEANED="../dataset_diabetes/diabetic_data.csv"
-PATH_ENCODED="./encoded_python.csv"
+PATH_ENCODED_FEATURES="./encoded_python_features.csv"
+PATH_ENCODED_LABELS="./encoded_python_labels.csv"
 
 def preprocess_col(val, i):
 # readmitted
@@ -207,7 +204,16 @@ def main():
         df[i] = df[i].apply(preprocess_col, args=(i,))
     # special case
     df[0][0] = 2
-    df.to_csv(PATH_ENCODED, header=False, index=False)
+    # balance 2 classes
+    readm_group = df.groupby(16).get_group(1)
+    healthy_group = df.groupby(16).get_group(0)
+    num_keep_size = min(readm_group.shape[0], healthy_group.shape[0])
+    df_balance = readm_group.sample(num_keep_size, replace=False)
+    df_balance = df_balance.append(healthy_group.sample(num_keep_size, replace=False))
+    print df_balance
+    # generate features/labels dataset
+    df_balance[df_balance.columns[0:16]].to_csv(PATH_ENCODED_FEATURES, header=False, index=False)
+    df_balance[16].to_csv(PATH_ENCODED_LABELS, header=False, index=False)
 
 if __name__ == "__main__":
     main()
