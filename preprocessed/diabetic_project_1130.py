@@ -5,7 +5,7 @@ Spyder Editor
 This is a temporary script file.
 """
 
-path_cleaned="./cleaned_spss.csv"
+path_cleaned="../dataset_diabetes/diabetic_data.csv"
 path_output="./encoded_python.csv"
 
 csvfile=open(path_cleaned)
@@ -99,7 +99,7 @@ for i in  range(1,len(data3)):
 import csv
 
 def createListCSV(fileName="", dataList=[]):
-    with open(fileName, "w",newline='') as csvFile:
+    with open(fileName, "w") as csvFile:
         csvWriter = csv.writer(csvFile,delimiter=',',dialect='excel') 
         for data in dataList:
             csvWriter.writerow(data)
