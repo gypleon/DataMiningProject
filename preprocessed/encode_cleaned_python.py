@@ -207,19 +207,7 @@ def main():
         df[i] = df[i].apply(preprocess_col, args=(i,))
     # special case
     df[0][0] = 2
-#    df.to_csv(PATH_ENCODED, header=False, index=False)
-# normalize
-    raw_data_mat = df.as_matrix()
-    print raw_data_mat
-
-    scaler = StandardScaler()
-    scaler.fit(data_mat)
-    data_mat = scaler.transform(data_mat)
-    print data_mat
-
-    pca = PCA(n_components=3)
-    pca.fit(data_mat)
-    print pca.explained_variance_ratio_
+    df.to_csv(PATH_ENCODED, header=False, index=False)
 
 if __name__ == "__main__":
     main()
