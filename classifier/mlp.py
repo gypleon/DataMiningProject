@@ -2,12 +2,17 @@
 
 import numpy as np
 
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+
 from sklearn.model_selection import train_test_split
 
 from sklearn.preprocessing import StandardScaler
 from sklearn import preprocessing as skpp
 
 from sklearn.neural_network import MLPClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.naive_bayes import GaussianNB
 
 PATH_DATASET="../preprocessed/encoded_python_features.csv"
 PATH_LABELS="../preprocessed/encoded_python_labels.csv"
@@ -26,10 +31,7 @@ def main():
     labels = load_dataset(PATH_DATASET)
     dataset = preprocessing(dataset)
 
-    train_data = dataset[:18000]
-    train_labels = labels[:18000]
-    test_data = dataset[18001:]
-    test_labels = labels[18001:]
+    train_data, test_data, train_labels, test_labels = train_test_split
 
     mlp = MLPClassifier()
     mlp.fit(train_data, train_labels)
