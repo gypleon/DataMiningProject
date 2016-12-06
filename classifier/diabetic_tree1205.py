@@ -150,7 +150,9 @@ def compute_roc_auc(classifiers, classifier_names, test_labels, test_data):
     num_classes = test_labels.shape[1]
     ind = 0
     for classifier in classifiers:
-        if hasattr(classifier, "decision_function"):
+        # all classifier adopt predict_proba() for roc_curve()
+        # if hasattr(classifier, "decision_function"):
+        if False:
             print "########## desicion function ###########", classifier_names[ind]
             test_score = classifier.decision_function(test_data)
             # Compute ROC curve and ROC area for each class
