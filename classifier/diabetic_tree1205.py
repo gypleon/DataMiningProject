@@ -6,6 +6,7 @@ import subprocess
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from itertools import cycle
 
 from sklearn.preprocessing import label_binarize
 from sklearn.preprocessing import OneHotEncoder
@@ -75,7 +76,7 @@ num_classes = labels.shape[1]
 # exit()
 
 # Generate Training & Testing Data
-train_data, test_data, train_labels, test_labels = train_test_split(X, labels, test_size=.2, random_state=100)
+train_data, test_data, train_labels, test_labels = train_test_split(X, labels, test_size=.33, random_state=100)
 print train_data, train_labels
 print train_data.shape, train_labels.shape
 
@@ -141,8 +142,7 @@ if not if_all_cls:
     # adaptive boosting
     print("ABC", abc.score(test_data, test_labels))
 
-# Plot
-# Receiver Operating Characteristic
+# Functions for Plot
 def compute_roc_auc(classifiers, classifier_names, test_labels, test_data):
     fpr = dict()
     tpr = dict()
@@ -171,10 +171,10 @@ def compute_roc_auc(classifiers, classifier_names, test_labels, test_data):
 def plot_roc(classifier_names, fpr, tpr, roc_auc):
     plt.figure()
     lw = 2
-    colors = ['b','g','r','c','m','y','k']
+    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
     ind = 0
-    for classifier in classifier_names:
-        plt.plot(fpr[classifier], tpr[classifier], color=colors[ind],
+    for classifier, color in zip(classifier_names, colors):
+        plt.plot(fpr[classifier], tpr[classifier], color=color,
                  linewidth=lw, label='%s (area = %0.2f)' % (classifier_names[ind], roc_auc[classifier]))
         ind += 1
     plt.plot([0, 1], [0, 1], color='navy', linewidth=lw, linestyle='--')
@@ -186,13 +186,50 @@ def plot_roc(classifier_names, fpr, tpr, roc_auc):
     plt.legend(loc="lower right")
     plt.show()
 
-# plot dtree
+# Compute Precision-Recall and plot curve
+def compute_precision_recall(classifiers, classifier_names, test_labels, test_data):
+    precision = dict()
+    recall = dict()
+    average_precision = dict()
+    num_classes = test_labels.shape[1]
+    ind = 0
+    for classifier in classifiers:
+        test_score = classifier.predict_proba(test_data)
+        precision[classifier_names[ind]], recall[classifier_names[ind]], _ = metrics.precision_recall_curve(test_labels.ravel(), test_score[:, 1])
+        average_precision[classifier_names[ind]] = metrics.average_precision_score(test_labels.ravel(), test_score[:, 1])
+        ind += 1
+    return precision, recall, average_precision
+
+# Plot Precision-Recall curve for each class
+def plot_precision_recall_classes(classifier_names, precision, recall, average_precision):
+    plt.clf()
+    lw = 2
+    colors = cycle(['navy', 'turquoise', 'darkorange', 'cornflowerblue', 'teal'])
+    ind = 0
+    for classifier, color in zip(classifier_names, colors):
+        plt.plot(recall[classifier_names[ind]], precision[classifier_names[ind]], color=color, lw=lw,
+                 label='{0} (area = {1:0.2f})'
+                       ''.format(classifier_names[ind], average_precision[classifier_names[ind]]))
+        ind += 1
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Precision-Recall Curve for Classifiers')
+    plt.legend(loc="upper right")
+    plt.show()
+
+# Plot
+# Receiver Operating Characteristic
+
+# Plot dtree
 # fpr, tpr, roc_auc = compute_roc_auc([dtree], ["Decision Tree"], test_labels, test_data)
 # plot_roc(["Decision Tree"], fpr, tpr, roc_auc)
-# plot all classifiers
-fpr, tpr, roc_auc = compute_roc_auc(classifiers, classifier_names, test_labels, test_data)
-plot_roc(classifier_names, fpr, tpr, roc_auc)
 
-
+# Plot all classifiers
+# fpr, tpr, roc_auc = compute_roc_auc(classifiers, classifier_names, test_labels, test_data)
+# plot_roc(classifier_names, fpr, tpr, roc_auc)
 
 # Precision-Recall
+precision, recall, average_precision = compute_precision_recall(classifiers, classifier_names, test_labels, test_data)
+plot_precision_recall_classes(classifier_names, precision, recall, average_precision)
