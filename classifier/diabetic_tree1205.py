@@ -1,22 +1,14 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Dec  5 20:29:53 2016
 
-@author: Samuel_lab
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 30 17:00:25 2016
-
-@author: Samuel_lab
-"""
 import os
 import subprocess
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import label_binarize
+from sklearn.preprocessing import OneHotEncoder
 
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
 from sklearn.naive_bayes import MultinomialNB
@@ -63,8 +55,7 @@ def encode_target(df, target_column):
     
 #data_defined2, targets = encode_target(resampled, "readmitted")  
 data_defined2, classes = encode_target(data_defined, "readmitted")    
-labels=data_defined2['Target'];
-num_classes = len(classes)
+labels = data_defined2['Target'];
 features = list(data_defined2.columns[:16])
 #X=data_defined2[features]
 #features_2= list(data_defined2.columns[3:11])
@@ -72,89 +63,133 @@ features = list(data_defined2.columns[:16])
 
 X=data_defined2[['age','admission_type_id','discharge_disposition_id','time_in_hospital','number_inpatient','A1Cresult','age']]
 
-# Convert into np.array
+# Convert into np.ndarray
 X = np.array(X)
 labels = np.array(labels)
+
+# Binarize the output
+# print X, X.shape, labels, labels.shape
+labels = label_binarize(labels, classes = [0,1])
+num_classes = labels.shape[1]
+# print X, X.shape, labels, labels.shape
+# exit()
+
+# Generate Training & Testing Data
 train_data, test_data, train_labels, test_labels = train_test_split(X, labels, test_size=.2, random_state=100)
+print train_data, train_labels
+print train_data.shape, train_labels.shape
+
+# Switch for all classifier
+if_all_cls = True
 
 # Train
-tree = DecisionTreeClassifier(max_depth=5,random_state=0)
-print type(tree)
-what = tree.fit(train_data, train_labels)
-print type(what)
-exit()
+classifiers = list()
+classifier_names = list()
 
-mnb = MultinomialNB()
-mnb.fit(train_data, train_labels)
+dtree = DecisionTreeClassifier(max_depth=5,random_state=0)
+dtree.fit(train_data, train_labels.ravel())
+classifiers.append(dtree) 
+classifier_names.append('Decision Tree')
 
-mlp = MLPClassifier(hidden_layer_sizes=(8, 8), max_iter=300, verbose=False)
-mlp.fit(train_data, train_labels)
+if if_all_cls:
 
-rfc = RandomForestClassifier(criterion="entropy", max_features=None, n_jobs=-1, verbose=False)
-rfc.fit(train_data, train_labels)
+    mnb = MultinomialNB()
+    mnb.fit(train_data, train_labels.ravel())
+    classifiers.append(mnb) 
+    classifier_names.append('Multinomial Naive Bayes')
 
-abc = AdaBoostClassifier()
-abc.fit(train_data, train_labels)
+    mlp = MLPClassifier(hidden_layer_sizes=(16, 16), max_iter=300, verbose=False)
+    mlp.fit(train_data, train_labels.ravel())
+    classifiers.append(mlp) 
+    classifier_names.append('Multi Layer Perceptron')
+
+    rfc = RandomForestClassifier(criterion="gini", max_features=None, n_jobs=-1, verbose=False)
+    rfc.fit(train_data, train_labels.ravel())
+    classifiers.append(rfc) 
+    classifier_names.append('Random Forest')
+
+    abc = AdaBoostClassifier()
+    abc.fit(train_data, train_labels.ravel())
+    classifiers.append(abc) 
+    classifier_names.append('AdaBoost')
 
 # Evaluation
 # decision tree
-tree_score = tree.score(test_data, test_labels)
-print('tree', tree_score)
-tree_score = what.decision_funcion()
-result=tree.predict(test_data)
-print('Cross_value_train')
-print(np.mean(cross_val_score(tree, train_data, train_labels, cv=20)))
-print('Cross_value_test')
-print(np.mean((cross_val_score(tree, test_data, test_labels, cv=20))))
-print('confusion_matrix',metrics.confusion_matrix( result, test_labels ))
-tn,fp,fn,tp=metrics.confusion_matrix(test_labels,result).ravel()
-print('tn,fp,fn,tp',tn,fp,fn,tp)
-print('matthews_corrcoef',metrics.matthews_corrcoef(result, test_labels))
-print('cohen_kappa_score',metrics.cohen_kappa_score(result, test_labels))
-print('f1_score',metrics.f1_score(result, test_labels)  )
-precision, recall, thresholds = metrics.precision_recall_curve(test_labels,result)  
-print('precision, recall, thresholds ',precision, recall, thresholds )
-# multinomial naive bayes
-print("MNB", mnb.score(test_data, test_labels))
-# multi layer perceptron
-print("MLP", mlp.score(test_data, test_labels))
-# random forest
-print("RFC", rfc.score(test_data, test_labels))
-# adaptive boosting
-print("ABC", abc.score(test_data, test_labels))
+tree_score = dtree.score(test_data, test_labels)
+# print('dtree', tree_score)
+# result=dtree.predict(test_data)
+# cross validation needs label 1d-array
+# print('Cross_value_train')
+# print(np.mean(cross_val_score(dtree, train_data, train_labels.ravel(), cv=20)))
+# print('Cross_value_test')
+# print(np.mean((cross_val_score(dtree, test_data, test_labels.ravel(), cv=20))))
+# print('confusion_matrix',metrics.confusion_matrix( result, test_labels ))
+# tn,fp,fn,tp=metrics.confusion_matrix(test_labels,result).ravel()
+# print('tn,fp,fn,tp',tn,fp,fn,tp)
+# print('matthews_corrcoef',metrics.matthews_corrcoef(result, test_labels))
+# print('cohen_kappa_score',metrics.cohen_kappa_score(result, test_labels))
+# print('f1_score',metrics.f1_score(result, test_labels)  )
+# precision, recall, thresholds = metrics.precision_recall_curve(test_labels,result)  
+# print('precision, recall, thresholds ',precision, recall, thresholds )
+if not if_all_cls:
+    # multinomial naive bayes
+    print("MNB", mnb.score(test_data, test_labels))
+    # multi layer perceptron
+    print("MLP", mlp.score(test_data, test_labels))
+    # random forest
+    print("RFC", rfc.score(test_data, test_labels))
+    # adaptive boosting
+    print("ABC", abc.score(test_data, test_labels))
 
 # Plot
 # Receiver Operating Characteristic
-def compute_roc_auc(test_labels, test_score):
-    # Compute ROC curve and ROC area for each class
+def compute_roc_auc(classifiers, classifier_names, test_labels, test_data):
     fpr = dict()
     tpr = dict()
     roc_auc = dict()
-    for i in range(num_classes):
-        fpr[i], tpr[i], _ = metrics.roc_curve(test_labels[:, i], test_score[:, i])
-        roc_auc[i] = metrics.auc(fpr[i], tpr[i])
-    # Compute micro-average ROC curve and ROC area
-    fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
-    roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+    num_classes = test_labels.shape[1]
+    ind = 0
+    for classifier in classifiers:
+        if hasattr(classifier, "decision_function"):
+            print "########## desicion function ###########", classifier_names[ind]
+            test_score = classifier.decision_function(test_data)
+            # Compute ROC curve and ROC area for each class
+            print classifier_names[ind], test_score
+            fpr[classifier_names[ind]], tpr[classifier_names[ind]], _ = metrics.roc_curve(test_labels.ravel(), test_score)
+        else:
+            print "########## predict proba ###########", classifier_names[ind]
+            test_score = classifier.predict_proba(test_data)
+            # Compute ROC curve and ROC area for each class
+            print classifier_names[ind], test_score
+            fpr[classifier_names[ind]], tpr[classifier_names[ind]], _ = metrics.roc_curve(test_labels.ravel(), test_score[:,1])
+        roc_auc[classifier_names[ind]] = metrics.auc(fpr[classifier_names[ind]], tpr[classifier_names[ind]])
+        ind += 1
     return fpr, tpr, roc_auc
 
-def plot_roc(fpr, tpr, roc_auc):
+def plot_roc(classifier_names, fpr, tpr, roc_auc):
     plt.figure()
     lw = 2
-    plt.plot(fpr[2], tpr[2], color='darkorange',
-             lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[2])
-    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    colors = ['b','g','r','c','m','y','k']
+    ind = 0
+    for classifier in classifier_names:
+        plt.plot(fpr[classifier], tpr[classifier], color=colors[ind],
+                 linewidth=lw, label='%s (area = %0.2f)' % (classifier_names[ind], roc_auc[classifier]))
+        ind += 1
+    plt.plot([0, 1], [0, 1], color='navy', linewidth=lw, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver operating characteristic example')
+    plt.title('Receiver Operating Characteristic')
     plt.legend(loc="lower right")
     plt.show()
 
-# plot tree
-fpr, tpr, roc_auc = compute_roc_auc(test_labels, tree_score)
-plot_roc(fpr, tpr, roc_auc)
+# plot dtree
+# fpr, tpr, roc_auc = compute_roc_auc([dtree], ["Decision Tree"], test_labels, test_data)
+# plot_roc(["Decision Tree"], fpr, tpr, roc_auc)
+# plot all classifiers
+fpr, tpr, roc_auc = compute_roc_auc(classifiers, classifier_names, test_labels, test_data)
+plot_roc(classifier_names, fpr, tpr, roc_auc)
 
 
 
