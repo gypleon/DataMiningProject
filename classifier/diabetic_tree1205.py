@@ -97,9 +97,9 @@ if_all_cls = True
 classifiers = list()
 classifier_names = list()
 
-dtree = DecisionTreeClassifier(max_depth=5,random_state=0)
+dtree = DecisionTreeClassifier(criterion="entropy",max_depth=5)
 dtree.fit(train_data, train_labels.ravel())
-export_graphviz(dtree, max_depth=3,feature_names=features,class_names=["non-readmitted", "readmitted"])
+export_graphviz(dtree, max_depth=3,feature_names=features,class_names=["non-readmitted", "readmitted"],leaves_parallel=True,rounded=True)
 classifiers.append(dtree) 
 classifier_names.append('Decision Tree')
 
@@ -115,12 +115,12 @@ if if_all_cls:
     classifiers.append(mlp) 
     classifier_names.append('Multi Layer Perceptron')
 
-    rfc = RandomForestClassifier(criterion="gini", max_features=None, n_jobs=-1, verbose=False)
+    rfc = RandomForestClassifier(criterion="entropy", max_features=None, n_jobs=-1, verbose=False)
     rfc.fit(train_data, train_labels.ravel())
     classifiers.append(rfc) 
     classifier_names.append('Random Forest')
 
-    abc = AdaBoostClassifier()
+    abc = AdaBoostClassifier(dtree)
     abc.fit(train_data, train_labels.ravel())
     classifiers.append(abc) 
     classifier_names.append('AdaBoost')
